@@ -22,8 +22,8 @@ $(document).ready(function () {
         }
     });
 
-    // View Products onclick of View Products Button
-    $("#viewProducts").click(function () {
+
+    function getAllProducts() {
         $.ajax({
             url: `http://${url}/allProductsFromDB`,
             type: "GET",
@@ -37,23 +37,33 @@ $(document).ready(function () {
                         `
                     <div class="col-4 mt-3 mb-3">
                         <div class="card">
-                            <img class="card-img-top" src="${productsFromMongo[i].image_url}" alt="Card image cap">
+                            <img class="card-img-top" src="${productsFromMongo[i].image_url}" alt="${productsFromMongo[i].name}">
                             <div class="card-body">
                                 <h5 class="card-title">${productsFromMongo[i].name}</h5>
                                 <p class="card-text">${productsFromMongo[i].price}</p>
-                                <button id="deleteProduct" value="${productsFromMongo[i]._id}" class="btn delete btn-primary" type="button" name="button">Delete</button>
+                                <button value="${productsFromMongo[i]._id}" class="btn delete btn-primary" type="button" name="button">Delete</button>
+                                <button value="${productsFromMongo[i]._id}" data-bs-toggle="modal" data-bs-target="#editModal" class="btn edit btn-primary" type="button" name="button">Edit</button>
+                                <button value="${productsFromMongo[i]._id}" data-bs-toggle="modal" data-bs-target="#readmoreModal" class="btn btn-primary readmore" type="button" name="button">Read More</button>
                                 </div>
                             </div>
                         </div>
                         `;
+                    editProducts();
                     deleteButtons();
+                    readmore();
                 }
             },
-            error: function (error) {
+            error: function () {
                 alert("Unable to get products");
             }
         });
+    }
+
+    // View Products onclick of View Products Button
+    $("#viewProducts").click(function () {
+        getAllProducts();
     }); // End of View Products
+
 
     // Add Product on Form Submit
     $("#addProduct").click(function (event) {
@@ -80,6 +90,7 @@ $(document).ready(function () {
                 success: function (product) {
                     console.log(product);
                     alert("Product Added");
+                    getAllProducts();
                 },
                 error: function () {
                     console.log("Error: Cannot call API or Add Product");
@@ -90,38 +101,51 @@ $(document).ready(function () {
 
     }); // End of Add Product click
 
-    $("#updateProduct").click(function (event) {
+
+    // Giving our "Save Changes" button the product ID for each Product
+
+    function editProducts() {
+        let editButtons = document.querySelectorAll(".edit");
+        let buttons = Array.from(editButtons);
+        buttons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                let saveChange = document.querySelector(".saveChange");
+                saveChange.value = this.value;
+            });
+        });
+    }
+
+    // UPDATE PRODUCT FROM MODAL SAVE BTN
+    $(".saveChange").click(function (event) {
         event.preventDefault();
-        let productId = $("#productId").val();
-        let productName = $("#productName").val();
-        let productPrice = $("#productPrice").val();
-        let productImageUrl = $("#imageurl").val();
-        let userid = sessionStorage.getItem("userID");
+        let productId = this.value;
+        let productName = $('#productName').val();
+        let productPrice = $('#productPrice').val();
+        let productImageUrl = $('#imageurl').val();
+        let userid = sessionStorage.getItem('userID');
         console.log(productId, productName, productPrice, productImageUrl);
-        if (productId == "" || !userid) {
-            alert("Please enter a product to update");
+        if (productId == '' || !userid) {
+            alert('Please enter a product to update');
         } else {
             $.ajax({
                 url: `http://${url}/updateProduct/${productId}`,
-                type: "PATCH",
+                type: 'PATCH',
                 data: {
                     name: productName,
                     price: productPrice,
                     image_url: productImageUrl
                 },
-
                 success: function (data) {
                     console.log(data);
+                    getAllProducts();
                 },
                 error: function () {
-                    console.log("Error: Cannot update post");
-                } // End of Error
+                    console.log('error: cannot update post');
+                } // error
+            }); // ajax
+        } // if
+    }); // update click
 
-            }); //End of AJAX
-
-        } // End of if
-
-    }); // End of update click
 
     function deleteButtons() {
         let deleteButtons = document.querySelectorAll(".delete");
@@ -138,18 +162,58 @@ $(document).ready(function () {
                     $.ajax({
                         url: `http://${url}/deleteProduct/${productId}`,
                         type: 'DELETE',
-                        success: function() {
+                        success: function () {
                             console.log('deleted');
                             alert('Product Deleted');
+                            getAllProducts();
                         },
-                        error: function() {
+                        error: function () {
                             console.log('error: cannot delete due to call on api');
-                        }// error
+                        } // error
                     }); // ajax
-                }// if
+                } // if
             });
         });
     }
+
+
+    // Get Single Product Data on Read More click and populate Read More Modal
+    function readmore() {
+        let readmoreButtons = document.querySelectorAll('.readmore');
+        let buttons = Array.from(readmoreButtons);
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                console.log(`readmore with an id of ${this.value}`);
+                let productId = this.value;
+                $.ajax({
+                    url: `http://${url}/singleProduct/${productId}`,
+                    type: 'GET',
+                    dataType : 'json',
+                    success: function (product) {
+                        console.log(product);
+                        let readmoreBody = document.getElementById("readMoreBody");
+                        readmoreBody.innerHTML = `
+                        <div class="row featurette">
+                        <div class="col-md-7">
+                            <h2 class="featurette-heading fw-normal lh-1">${product.name} <span
+                                    class="text-muted">${product.price}</span></h2>
+                            <p class="lead">Some great placeholder content for the first featurette here. Imagine some
+                                exciting prose here.</p>
+                        </div>
+                        <div class="col-md-5">
+                            <img src="${product.image_url}" class="w-100" alt="${product.name}">        
+                        </div>
+                    </div>
+                        `;
+                    },
+                    error: function() {
+                        alert('Unable to find product');
+                    }
+                }); // end of ajax
+            }); // button onClick
+        }); // end of forEach
+    } // Readmore function
+
 
 
     // ------------ ADD USER API CALLS ------------ //
@@ -229,7 +293,9 @@ $(document).ready(function () {
                         sessionStorage.setItem("username", user["username"]);
                         sessionStorage.setItem("userEmail", user["email"]);
                         console.log(sessionStorage);
-                        alert("Welcome Back! :)");
+                        let loggedIn = document.querySelector('.logged-in');
+                        loggedIn.innerHTML = `<p>Logged in as <span class="text-danger">${username.toUpperCase()}</span></p>`;
+                        alert(`Welcome Back ${username.toUpperCase()}! :)`);
                     } // End of if
 
                 }, // End of success

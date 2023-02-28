@@ -46,6 +46,15 @@ app.get("/allProductsFromDB", (req, res) => {
     })
 })
 
+
+// Get Single Product
+app.get('/singleProduct/:id', (req,res) => {
+    const idParam = req.params.id;
+    Product.findById(idParam).then(result => {
+        res.send(result)
+    });
+});
+
 // Post method to CREATE a product
 app.post("/addProduct", (req, res) => {
     const dbProduct = new Product({
@@ -59,6 +68,7 @@ app.post("/addProduct", (req, res) => {
         res.send(result);
     }).catch(err => res.send(err))
 })
+
 
 // Edit or UPDATE - using "Patch"
 
