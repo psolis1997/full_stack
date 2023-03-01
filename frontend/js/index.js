@@ -16,6 +16,7 @@ $(document).ready(function () {
             console.log(configData.SERVER_URL, configData.SERVER_PORT);
             url = `${configData.SERVER_URL}:${configData.SERVER_PORT}`;
             console.log(url);
+            getAllProducts();
         },
         error: function (error) {
             console.log(error);
@@ -24,40 +25,62 @@ $(document).ready(function () {
 
 
     function getAllProducts() {
-        $.ajax({
-            url: `http://${url}/allProductsFromDB`,
-            type: "GET",
-            dataType: "json",
-
-            success: function (productsFromMongo) {
-                document.getElementById("result").innerHTML = "";
-                for (let i = 0; i < productsFromMongo.length; i++) {
-                    console.log(productsFromMongo[i]);
-                    document.getElementById("result").innerHTML +=
-                        `
-                    <div class="col-4 mt-3 mb-3">
-                        <div class="card">
-                            <img class="card-img-top" src="${productsFromMongo[i].image_url}" alt="${productsFromMongo[i].name}">
-                            <div class="card-body">
-                                <h5 class="card-title">${productsFromMongo[i].name}</h5>
-                                <p class="card-text">${productsFromMongo[i].price}</p>
-                                <button value="${productsFromMongo[i]._id}" class="btn delete btn-primary" type="button" name="button">Delete</button>
-                                <button value="${productsFromMongo[i]._id}" data-bs-toggle="modal" data-bs-target="#editModal" class="btn edit btn-primary" type="button" name="button">Edit</button>
-                                <button value="${productsFromMongo[i]._id}" data-bs-toggle="modal" data-bs-target="#readmoreModal" class="btn btn-primary readmore" type="button" name="button">Read More</button>
+        let userid = sessionStorage.getItem("userID");
+        if (!userid) {
+            alert("Please log in");
+        } else {
+            $.ajax({
+                url: `http://${url}/allProductsFromDB`,
+                type: "GET",
+                dataType: "json",
+    
+                success: function (productsFromMongo) {
+                    let results = document.getElementById("result");
+                    results.innerHTML = "";
+                    for (let i = 0; i < productsFromMongo.length; i++) {
+                        let createdBy = productsFromMongo[i].user_id;
+                        console.log(productsFromMongo[i]);
+                        if (createdBy === userid) {
+                            results.innerHTML += `
+                            <div class="col-4 mt-3 mb-3">
+                                <div class="card">
+                                    <img class="card-img-top" src="${productsFromMongo[i].image_url}" alt="${productsFromMongo[i].name}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${productsFromMongo[i].name}</h5>
+                                        <p class="card-text">${productsFromMongo[i].price}</p>
+                                        <button value="${productsFromMongo[i]._id}" class="btn delete btn-primary" type="button" name="button">Delete</button>
+                                        <button value="${productsFromMongo[i]._id}" data-bs-toggle="modal" data-bs-target="#editModal" class="btn edit btn-primary" type="button" name="button">Edit</button>
+                                        <button value="${productsFromMongo[i]._id}" data-bs-toggle="modal" data-bs-target="#readmoreModal" class="btn btn-primary readmore" type="button" name="button">Read More</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        `;
-                    editProducts();
-                    deleteButtons();
-                    readmore();
+                            `;
+                        } else {
+                            results.innerHTML += `
+                            <div class="col-4 mt-3 mb-3">
+                                <div class="card">
+                                    <img class="card-img-top" src="${productsFromMongo[i].image_url}" alt="${productsFromMongo[i].name}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${productsFromMongo[i].name}</h5>
+                                        <p class="card-text">${productsFromMongo[i].price}</p>
+                                        <button value="${productsFromMongo[i]._id}" data-bs-toggle="modal" data-bs-target="#readmoreModal" class="btn btn-primary readmore" type="button" name="button">Read More</button>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+                        }
+                        editProducts();
+                        deleteButtons();
+                        readmore();
+                    }
+                },
+                error: function () {
+                    alert("Unable to get products");
                 }
-            },
-            error: function () {
-                alert("Unable to get products");
-            }
-        });
+            }); // End of AJAX
+        } // End of if else
     }
+
 
     // View Products onclick of View Products Button
     $("#viewProducts").click(function () {
@@ -315,6 +338,7 @@ $(document).ready(function () {
         sessionStorage.clear();
         alert("You are now logged out.");
         console.log(sessionStorage);
+        // window.location.href = "./about.html"; //This line redirects the page to a different link upon log out
     });
 
 }); // Document ready function ends
