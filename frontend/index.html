@@ -15,14 +15,48 @@
 <body>
 
     <div class="container p-5">
-
-        
-
+    
         <!-- Inputs -->
         <div id="addContainer">
 
+            <button data-bs-toggle="modal" data-bs-target="#addModal" class="btn add btn-primary mb-5" type="button" name="button">Add Product</button>
+
+
+            <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="text-primary"> Add Product Form </h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- add Form -->
+                            <form id="addProductForm" class="py-5 px-5">
+        
+                                <label class="mr-4" for="a-name"> Enter name of the product </label>
+                                <input type="text" id="a-name" name="productName" class="rounded-pill">
+                                <br><br>
+                
+                                <label class="mr-4" for="a-price"> Enter price of the product </label>
+                                <input type="number" id="a-price" name="productPrice" class="rounded-pill">
+                                <br><br>
+                
+                                <label class="mr-5" for="a-imageurl"> Enter the image url </label>
+                                <input type="text" class="ml-5 rounded-pill" id="a-imageurl" name="a-imageurl">
+                                <br><br>
+                            </form>
+                            <!-- add form ends -->
+                        </div>
+                        <div class="modal-footer">
+                            <button id="addProduct" name="productButton" type="submit" class="btn btn-primary rounded-pill">Add
+                                product</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Add Product Form -->
-            <form id="addProductForm" class=" p-5">
+            <!-- <form id="addProductForm" class=" p-5">
                 <h1 class="text-primary"> Add Product Form </h1> <br><br>
 
                 <label class="mr-4" for="a-name"> Enter name of the product </label>
@@ -39,7 +73,7 @@
 
                 <button id="addProduct" name="productButton" type="submit" class="btn btn-primary rounded-pill">Add
                     product</button>
-            </form>
+            </form> -->
             <!-- Add Form Ends -->
 
             <!-- Delete Form -->
