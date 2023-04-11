@@ -33,7 +33,7 @@ $(document).ready(function () {
                 url: `http://${url}/allProductsFromDB`,
                 type: "GET",
                 dataType: "json",
-    
+
                 success: function (productsFromMongo) {
                     let results = document.getElementById("result");
                     results.innerHTML = "";
@@ -211,25 +211,50 @@ $(document).ready(function () {
                 $.ajax({
                     url: `http://${url}/singleProduct/${productId}`,
                     type: 'GET',
-                    dataType : 'json',
+                    dataType: 'json',
                     success: function (product) {
                         console.log(product);
                         let readmoreBody = document.getElementById("readMoreBody");
                         readmoreBody.innerHTML = `
                         <div class="row featurette">
-                        <div class="col-md-7">
-                            <h2 class="featurette-heading fw-normal lh-1">${product.name} <span
+                            <div class="col-md-7">
+                                <h2 class="featurette-heading fw-normal lh-1">${product.name.toUpperCase()} <span
                                     class="text-muted">${product.price}</span></h2>
-                            <p class="lead">Some great placeholder content for the first featurette here. Imagine some
+                                <p class="lead">Some great placeholder content for the first featurette here. Imagine some
                                 exciting prose here.</p>
+                            </div>
+                            <div class="col-md-5">
+                                <img id="modalImage" class="w-100" src="${product.image_url}" alt="${product.name}">
+                            </div>
+                            <div class="accordion" id="accordionExample">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingOne">
+                                    <button id="viewComments" value="${product._id}" class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    View Comments
+                                    </button>
+                                     </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne"
+                                    data-bs-parent="#accordionExample">
+                                        <div class="accordion-body">
+                                            <div id="comments">
+                                                
+                                            </div>
+                                            <div class="add-comment">
+                                                <label for="exampleFormControlTextarea1" class="form-label">New Comment</label>
+                                                <textarea id="newCommentText" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                                                <button id="saveComment" class="btn btn-primary mt-3">Save Comment</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-5">
-                            <img src="${product.image_url}" class="w-100" alt="${product.name}">        
-                        </div>
-                    </div>
                         `;
+                        viewComments();
+                        addComment();
                     },
-                    error: function() {
+                    error: function () {
                         alert('Unable to find product');
                     }
                 }); // end of ajax
@@ -340,5 +365,92 @@ $(document).ready(function () {
         console.log(sessionStorage);
         // window.location.href = "./about.html"; //This line redirects the page to a different link upon log out
     });
+
+
+    // COMMENTS
+    // Get Comments
+    function getComments() {
+        let commentsContainer = document.getElementById('comments');
+        let productId = $('#viewComments').val();
+        $.ajax({
+            url: `http://${url}/allComments`,
+            type: 'GET',
+            dataType: 'json',
+
+            success: function (comments) {
+                console.log(comments);
+                commentsContainer.innerHTML = '';
+                for (i = 0; i < comments.length; i++) {
+                    if (productId === comments[i].product_id) {
+                        console.log(comments[i]);
+                        let date = comments[i].time;
+                        let dateObject = new Date(date);
+                        let hour = dateObject.getHours();
+                        let m = 'AM'
+                        if (hour === 0) {
+                            m = 'PM'
+                        } if (hour > 12) {
+                                hour = hour - 12;
+                                m = 'PM'
+                            }
+                        let minute = dateObject.getMinutes();
+                        let day = dateObject.getDate();
+                        let month = (dateObject.getMonth() + 1);
+                        let year = dateObject.getFullYear();
+                        let formattedDate = `${day}/${month}/${year} ${hour}:${minute}${m}`
+                        commentsContainer.innerHTML += `
+                            <div class='new-comment'>
+                                <p>${comments[i].text}</p>
+                                <h6 class='test-muted'>Posted by: <span>${comments[i].username}</span><br><span>${formattedDate}</span></h6>
+                            </div>
+                        `;
+                    } // else {
+                    //     commentsContainer.innerHTML = `
+                    //         <div class='new-comment'>
+                    //             <p class='test-muted'> This product has no comments yet. Please post a comment below. </p>
+                    //         </div>
+                    //     `;
+                    // }
+                }
+            },
+            error: function () {
+                console.log('Error: cannot call comments API');
+            } // End of error
+        }); // End of AJAX
+    } // End of Get Comments
+
+    // View Comments
+    function viewComments() {
+        $('#viewComments').click(function () {
+            getComments();
+        });
+    }
+
+    function addComment() {
+        $('#saveComment').click(function () {
+            let comment = $('#newCommentText').val();
+            let user = sessionStorage.getItem('userName');
+            let productId = $('#viewComments').val();
+            console.log(user);
+            console.log(comment);
+            console.log(productId);
+            $.ajax({
+                url: `http://${url}/createComment`,
+                type: "POST",
+                data: {
+                    text: comment,
+                    username: user,
+                    product_id: productId
+                },
+                success: function (comment) {
+                    console.log(comment);
+                    getComments();
+                },
+                error: function () {
+                    console.log('Error: cannot post comment');
+                } // End of error
+            }); // End of AJAX
+        }); // End of click
+    } // End of function
 
 }); // Document ready function ends

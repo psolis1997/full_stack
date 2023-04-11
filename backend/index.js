@@ -7,6 +7,8 @@ const bcrypt = require("bcryptjs");
 const config = require("./config.json"); // Get config
 const Product = require("./models/product");
 const User = require("./models/user");
+const Comment = require("./models/comments");
+
 
 
 const port = 8080; // Set the port number for our local server
@@ -156,3 +158,60 @@ app.post("/loginUser", (req, res) => {
     }) // End of FindOne
 
 }) // End of Post for Login
+
+
+
+
+// --------- COMMENT ENDPOINT --------- //
+
+// Get All Comments
+app.get('/allComments', (req, res) => {
+    Comment.find().then(result => {
+        res.send(result);
+    })
+})
+
+// Create a Comment
+app.post('/createComment', (req, res) => {
+    const newComment = new Comment({
+        _id: new mongoose.Types.ObjectId,
+        text: req.body.text,
+        time: new Date(),
+        username: req.body.username,
+        product_id: req.body.product_id
+    }); // End of const
+    newComment.save()
+        .then(result => {
+            Product.updateOne({
+                _id: req.body.product_id
+            }).then(result => {
+                res.send(newComment);
+            }).catch(err => {
+                res.send(err);
+            })
+        });
+}); // End of post
+
+// Delete Comments
+app.delete('/deleteComments/:id', (req, res) => {
+    Comment.findOne({
+        _id: req.params.id
+    }, (err, comment) => {
+        if(comment && comment['username'] == req.body.username) {
+            Products.updateOne({
+                _id: comment.product_id
+            }).then(result => {
+                Comment.deleteOne({
+                    _id: req.params.id,
+                }, err =>{
+                    res.send('Deleted')
+                })
+            }).catch(err => {
+                res.send(err);
+            });
+        } // End of if
+        else {
+            res.send('Not Found / Not Authorised')
+        }
+    })
+})
